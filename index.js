@@ -1,6 +1,7 @@
 const { Pool } = require('pg');
 const config = require('./config.json');
 const redis = require('redis');
+const { isPaused } = require('./helpers.js');
 
 const postgresPool = new Pool({
     user: config.postgres.user,
