@@ -68,8 +68,9 @@ const runApp = async () => {
 
 			if(!paused){
 				switch(action_name){
-				//case "createfarm":
-					//await handle_createfarm(message, postgresPool);
+				case "createfarm":
+					console.log(action_name);
+					await handle_createfarm(message, postgresPool);
 				//case "logstake":
 					//await handle_logstake(message, postgresPool);
 				default:
