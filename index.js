@@ -29,7 +29,7 @@ const runApp = async () => {
 
 	// for testing only
 	await subscriber.subscribe(`ship::wax::heartbeat`, async (message) => {
-		//console.log(`heartbeat: ${message}`)
+		console.log(`heartbeat: ${message}`)
 	})		
 
 	/**
