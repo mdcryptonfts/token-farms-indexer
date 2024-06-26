@@ -70,7 +70,7 @@ CREATE TABLE tokenfarms_farm_deltas (
 
 CREATE TABLE tokenfarms_staker_deltas (
     delta_id BIGSERIAL PRIMARY KEY,
-    user_farm VARCHAR(12) NOT NULL,
+    user_farm VARCHAR(25) NOT NULL,
     delta_type delta_type_enum NOT NULL,
     old_data JSON,
     block_number BIGINT NOT NULL

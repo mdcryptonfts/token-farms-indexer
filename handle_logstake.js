@@ -75,7 +75,8 @@ const handle_logstake = async (message, postgresPool) => {
                     epoch_timestamp
                 ];   
 
-                await postgresClient.query(insertStakerQuery, stakerValues);             
+                await postgresClient.query(insertStakerQuery, stakerValues);  
+                console.log(`inserted user ${user}`);           
 
                 const insertDeltaQuery = `
                   INSERT INTO tokenfarms_staker_deltas (user_farm, delta_type, block_number)
@@ -87,6 +88,7 @@ const handle_logstake = async (message, postgresPool) => {
                     block_num
                 ];
                 await postgresClient.query(insertDeltaQuery, deltaValues);
+                console.log(`Inserted delta for inserting user ${user}`);
 
             }
         } catch (error) {
