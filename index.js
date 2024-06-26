@@ -23,16 +23,19 @@ const runApp = async () => {
 
 	console.log("All connections established")
 
-	/**
-	 * for testing
-	 */
-
+	// for testing only
+	/*
 	await subscriber.subscribe(`ship::wax::actions/contract/waxdaofarmer`, async (message) => {
 		const block_num = JSON.parse(message).blocknum;
 		const block_timestamp = JSON.parse(message).blocktimestamp;
 		const date = new Date(block_timestamp);
 		const epoch_timestamp = Math.floor(date.getTime() / 1000);	
 		console.log(`\nwaxdaofarmer action:\nblocknum: ${block_num}\nblock_timestamp: ${block_timestamp}`);
+	})	
+	*/	
+
+	await subscriber.subscribe(`ship::wax::heartbeat`, async (message) => {
+		console.log(`heartbeat: ${message}`)
 	})		
 
 	/**
@@ -55,17 +58,30 @@ const runApp = async () => {
 		console.log(`rollback: ${message}`)
 	})		
 
-	await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}/name/createfarm`, async (message) => {
+	await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}`, async (message) => {
+		const action_name = JSON.parse(message).name;
+		const data = JSON.parse(message).data;
+
 		try{
 			const paused = await isPaused(client);
 
 			if(!paused){
-				//await handle_createfarm(message, postgresPool);
+				switch(action_name){
+				//case "createfarm":
+					//await handle_createfarm(message, postgresPool);
+				//case "logstake":
+					//await handle_logstake(message, postgresPool);
+				default:
+					console.log("default")
+					console.log(action_name)
+					console.log(data)
+				}
+				
 			} else {
 				//await cache_createfarm(message, client);
 			}
 		} catch (e) {
-			console.log(`error with createfarm: ${e}`);
+			console.log(`error processing ${config.farm_name} action: ${e}`);
 		}
 	})	
 			      
