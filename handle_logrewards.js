@@ -13,7 +13,7 @@ const handle_logrewards = async (message, postgresPool) => {
         postgresClient = await postgresPool.connect();
 
         const data = JSON.parse(message)?.data;
-        const farm_struct = data.f
+        const f = data.f;
         const rewards = data.rs;
 
         try {
