@@ -50,10 +50,10 @@ const handle_logrewards = async (message, postgresPool) => {
                 ];
                 await postgresClient.query(insertDeltaQuery, deltaValues);
 
-                console.log(`Inserted delta for updating ${farm_name} farm`);
+                console.log(`Inserted delta for updating ${f.farm_name} farm`);
 
             } else {
-            	console.log(`No existing row on logrewards for ${farm_name} (this should never happen)`);
+            	console.log(`No existing row on logrewards for ${f.farm_name} (this should never happen)`);
             }
         } catch (error) {
             console.log(`Error: ${error}`);
