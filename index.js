@@ -69,8 +69,11 @@ const runApp = async () => {
 					await handle_logrewards(message, postgresPool);
 					break;
 				case "logstake":
-					await handle_logstake(message, postgresPool);
+					await handle_logstake(message, postgresPool, action_name);
 					break;
+				case "logunstake":
+					await handle_logstake(message, postgresPool, action_name);
+					break;					
 				default:
 					console.log("default")
 					console.log(action_name)

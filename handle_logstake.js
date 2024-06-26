@@ -1,6 +1,6 @@
 const config = require('./config.json');
 
-const handle_logstake = async (message, postgresPool) => {
+const handle_logstake = async (message, postgresPool, action_name) => {
     let postgresClient = null;
 
     try {
@@ -43,7 +43,7 @@ const handle_logstake = async (message, postgresPool) => {
                 const updateValues = [updated_balance, epoch_timestamp, farm_name, user];
                 const updateResult = await postgresClient.query(updateQuery, updateValues);
 
-                console.log(`updated user ${user}`);
+                console.log(`updated user ${user} for ${action_name} action`);
 
                 const insertDeltaQuery = `
 				  INSERT INTO tokenfarms_staker_deltas (user_farm, delta_type, old_data, block_number)
@@ -57,11 +57,13 @@ const handle_logstake = async (message, postgresPool) => {
                 ];
                 await postgresClient.query(insertDeltaQuery, deltaValues);
 
-                console.log(`Inserted delta for updating user ${user}`);
+                console.log(`Inserted delta for updating user_farm ${user_farm}`);
 
             } else {
-            	// no row was found
-                // insert the user
+
+                if(action_name == "logunstake"){
+                    throw new Error(`unstake action for ${user_farm} but no existing row`);
+                }
 
                 const insertStakerQuery = `
                   INSERT INTO tokenfarms_stakers (username, farm_name, balance, last_update_time)
@@ -88,7 +90,7 @@ const handle_logstake = async (message, postgresPool) => {
                     block_num
                 ];
                 await postgresClient.query(insertDeltaQuery, deltaValues);
-                console.log(`Inserted delta for inserting user ${user}`);
+                console.log(`Inserted delta for inserting user_farm ${user_farm}`);
 
             }
         } catch (error) {
