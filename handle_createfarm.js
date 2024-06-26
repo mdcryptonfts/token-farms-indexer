@@ -27,11 +27,8 @@ const handle_createfarm = async (message, postgresPool) => {
 			  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 			`;
 			const insertValues = [farm_name, creator, original_creator, epoch_timestamp, staking_token, 0, 0, vesting_time, epoch_timestamp];
-			
-			console.log("insertValues:");
-			console.log(insertValues);
 			const insertResult = await postgresClient.query(insertQuery, insertValues);
-			console.log("inserted farm");
+
 		} catch (e) {
 			console.log(`error inserting into _farms: ${e}`);
 		}
@@ -44,11 +41,7 @@ const handle_createfarm = async (message, postgresPool) => {
 			`;
 
 			const insertValues = [farm_name, 'INSERT', block_num];
-
-			console.log("insertValues:");
-			console.log(insertValues);
 			const insertResult = await postgresClient.query(insertQuery, insertValues);		
-			console.log("inserted farm delta")	
 
 		} catch (e) {
 			console.log(`error inserting delta for createfarm: ${e}`);

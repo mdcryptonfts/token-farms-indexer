@@ -24,7 +24,7 @@
     total_staked BIGINT NOT NULL,
     vesting_time BIGINT NOT NULL,
     last_update_time BIGINT NOT NULL,
-    reward_pools JSON,
+    reward_pools JSON
 );
 
 > GRANT ALL PRIVILEGES ON TABLE tokenfarms_farms TO waxdao;
@@ -37,16 +37,18 @@
 
 > CREATE TABLE tokenfarms_stakers (
     id SERIAL PRIMARY KEY NOT NULL,
-    user VARCHAR(12) NOT NULL,
+    username VARCHAR(12) NOT NULL,
     farm_name VARCHAR(12) NOT NULL,
     balance JSON,
-    last_update_time BIGINT NOT NULL
+    last_update_time BIGINT NOT NULL,
+    CONSTRAINT user_farm_unique UNIQUE (username, farm_name)
 );
 
 > GRANT ALL PRIVILEGES ON TABLE tokenfarms_stakers TO waxdao;
-> CREATE INDEX user_idx ON tokenfarms_stakers (user);
+> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_stakers_id_seq TO waxdao;
+> CREATE INDEX user_idx ON tokenfarms_stakers (username);
 > CREATE INDEX farm_idx ON tokenfarms_stakers (farm_name);
-> CREATE INDEX user_farm_idx ON tokenfarms_stakers (user, farm_name);
+> CREATE INDEX user_farm_idx ON tokenfarms_stakers (username, farm_name);
 
 
 ## Table creation for farm deltas
@@ -60,15 +62,20 @@ CREATE TABLE tokenfarms_farm_deltas (
     old_data JSON,
     block_number BIGINT NOT NULL
 );
-
+> GRANT ALL PRIVILEGES ON TABLE tokenfarms_farm_deltas TO waxdao;
+> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_farm_deltas_delta_id_seq TO waxdao;
+> CREATE INDEX block_idx ON tokenfarms_farm_deltas (block_number);
 
 ## Table creation for staker deltas
 
 CREATE TABLE tokenfarms_staker_deltas (
     delta_id BIGSERIAL PRIMARY KEY,
     user_farm VARCHAR(12) NOT NULL,
-    delta_type delta_type_enum NOT NULL
+    delta_type delta_type_enum NOT NULL,
     old_data JSON,
     block_number BIGINT NOT NULL
 );
+> GRANT ALL PRIVILEGES ON TABLE tokenfarms_staker_deltas TO waxdao;
+> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_staker_deltas_delta_id_seq TO waxdao;
+> CREATE INDEX staker_block_idx ON tokenfarms_staker_deltas (block_number);
 

@@ -3,6 +3,7 @@ const config = require('./config.json');
 const redis = require('redis');
 const { isPaused } = require('./helpers.js');
 const { handle_createfarm } = require('./handle_createfarm.js');
+const { handle_logrewards } = require('./handle_logrewards.js');
 
 const postgresPool = new Pool({
     user: config.postgres.user,
@@ -26,16 +27,6 @@ const runApp = async () => {
 	console.log("All connections established")
 
 	// for testing only
-	/*
-	await subscriber.subscribe(`ship::wax::actions/contract/waxdaofarmer`, async (message) => {
-		const block_num = JSON.parse(message).blocknum;
-		const block_timestamp = JSON.parse(message).blocktimestamp;
-		const date = new Date(block_timestamp);
-		const epoch_timestamp = Math.floor(date.getTime() / 1000);	
-		console.log(`\nwaxdaofarmer action:\nblocknum: ${block_num}\nblock_timestamp: ${block_timestamp}`);
-	})	
-	*/	
-
 	await subscriber.subscribe(`ship::wax::heartbeat`, async (message) => {
 		//console.log(`heartbeat: ${message}`)
 	})		
@@ -72,6 +63,8 @@ const runApp = async () => {
 				case "createfarm":
 					console.log(action_name);
 					await handle_createfarm(message, postgresPool);
+				case "logrewards":
+					await handle_logrewards(message, postgresPool);
 				//case "logstake":
 					//await handle_logstake(message, postgresPool);
 				default:
