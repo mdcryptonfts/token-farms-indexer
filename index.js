@@ -28,8 +28,11 @@ const runApp = async () => {
 	 */
 
 	await subscriber.subscribe(`ship::wax::actions/contract/waxdaofarmer`, async (message) => {
-		console.log("\n\nwaxdaofarmer action")
-		console.log(message)
+		const block_num = JSON.parse(message).blocknum;
+		const block_timestamp = JSON.parse(message).blocktimestamp;
+		const date = new Date(blocktimestamp);
+		const epoch_timestamp = Math.floor(date.getTime() / 1000);	
+		console.log(`\nwaxdaofarmer action:\nblocknum: ${block_num}\nblock_timestamp: ${block_timestamp}`);
 	})		
 
 	/**
