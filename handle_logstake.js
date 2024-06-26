@@ -75,7 +75,7 @@ const handle_logstake = async (message, postgresPool) => {
                     epoch_timestamp
                 ];   
 
-                await postgresClient.query(insertStakerQuerym stakerValues);             
+                await postgresClient.query(insertStakerQuery, stakerValues);             
 
                 const insertDeltaQuery = `
                   INSERT INTO tokenfarms_staker_deltas (user_farm, delta_type, block_number)
