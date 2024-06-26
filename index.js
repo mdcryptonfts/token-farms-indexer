@@ -4,6 +4,7 @@ const redis = require('redis');
 const { isPaused } = require('./helpers.js');
 const { handle_createfarm } = require('./handle_createfarm.js');
 const { handle_logrewards } = require('./handle_logrewards.js');
+const { handle_logstake } = require('./handle_logstake.js');
 
 const postgresPool = new Pool({
     user: config.postgres.user,
@@ -65,8 +66,8 @@ const runApp = async () => {
 					await handle_createfarm(message, postgresPool);
 				case "logrewards":
 					await handle_logrewards(message, postgresPool);
-				//case "logstake":
-					//await handle_logstake(message, postgresPool);
+				case "logstake":
+					await handle_logstake(message, postgresPool);
 				default:
 					console.log("default")
 					console.log(action_name)

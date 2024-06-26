@@ -7,6 +7,8 @@ const handle_logstake = async (message, postgresPool) => {
 
         const block_num = JSON.parse(message).blocknum;
         const block_timestamp = JSON.parse(message).blocktimestamp;
+        const date = new Date(block_timestamp);
+        const epoch_timestamp = Math.floor(date.getTime() / 1000);          
         const first_receiver = JSON.parse(message)?.receiver;
         if (first_receiver != config.farm_contract) return;
 
@@ -38,7 +40,7 @@ const handle_logstake = async (message, postgresPool) => {
 		        WHERE farm_name = $3
                 AND user = $4
 		      `;
-                const updateValues = [updated_balance, block_timestamp, farm_name, user];
+                const updateValues = [updated_balance, epoch_timestamp, farm_name, user];
                 const updateResult = await postgresClient.query(updateQuery, updateValues);
 
                 console.log(`updated user ${user}`);
@@ -60,7 +62,32 @@ const handle_logstake = async (message, postgresPool) => {
             } else {
             	// no row was found
                 // insert the user
-                // delta = INSERT
+
+                const insertStakerQuery = `
+                  INSERT INTO tokenfarms_stakers (username, farm_name, balance, last_update_time)
+                  VALUES ($1, $2, $3, $4)
+                `;
+
+                const stakerValues = [
+                    user,
+                    'INSERT',
+                    updated_balance,
+                    epoch_timestamp
+                ];   
+
+                await postgresClient.query(insertStakerQuerym stakerValues);             
+
+                const insertDeltaQuery = `
+                  INSERT INTO tokenfarms_staker_deltas (user_farm, delta_type, block_number)
+                  VALUES ($1, $2, $3)
+                `;
+                const deltaValues = [
+                    user_farm,
+                    'INSERT',
+                    block_num
+                ];
+                await postgresClient.query(insertDeltaQuery, deltaValues);
+
             }
         } catch (error) {
             console.log(`Error: ${error}`);
