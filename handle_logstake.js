@@ -14,10 +14,8 @@ const handle_logstake = async (message, postgresPool) => {
 
         postgresClient = await postgresPool.connect();
 
-        const data = JSON.parse(message).data;
+        const data = JSON.parse(message)?.data;
         const user = data.user
-        console.log("message");
-        console.log(message);
         const farm_name = data.farm_name;
         const amount = data.amount;
         const updated_balance = data.updated_balance;

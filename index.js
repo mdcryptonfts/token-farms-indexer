@@ -64,10 +64,13 @@ const runApp = async () => {
 				case "createfarm":
 					console.log(action_name);
 					await handle_createfarm(message, postgresPool);
+					break;
 				case "logrewards":
 					await handle_logrewards(message, postgresPool);
+					break;
 				case "logstake":
 					await handle_logstake(message, postgresPool);
+					break;
 				default:
 					console.log("default")
 					console.log(action_name)
