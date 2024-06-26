@@ -27,7 +27,7 @@ const handle_logstake = async (message, postgresPool) => {
 		      SELECT *
 		      FROM tokenfarms_stakers
 		      WHERE farm_name = $1
-              AND user = $2
+              AND username = $2
 		    `;
             const selectResult = await postgresClient.query(selectQuery, [farm_name, user]);
 
@@ -38,7 +38,7 @@ const handle_logstake = async (message, postgresPool) => {
 		        UPDATE tokenfarms_stakers 
 		        SET balance = $1, last_update_time = $2
 		        WHERE farm_name = $3
-                AND user = $4
+                AND username = $4
 		      `;
                 const updateValues = [updated_balance, epoch_timestamp, farm_name, user];
                 const updateResult = await postgresClient.query(updateQuery, updateValues);
