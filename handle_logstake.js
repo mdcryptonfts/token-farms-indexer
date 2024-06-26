@@ -14,7 +14,7 @@ const handle_logstake = async (message, postgresPool) => {
 
         postgresClient = await postgresPool.connect();
 
-        const data = JSON.parse(message)?.data;
+        const data = JSON.parse(message).data;
         const user = data.user
         const farm_name = data.farm_name;
         const amount = data.amount;
@@ -70,7 +70,7 @@ const handle_logstake = async (message, postgresPool) => {
 
                 const stakerValues = [
                     user,
-                    'INSERT',
+                    farm_name,
                     updated_balance,
                     epoch_timestamp
                 ];   
@@ -90,7 +90,7 @@ const handle_logstake = async (message, postgresPool) => {
 
             }
         } catch (error) {
-            console.log(`Error: ${error}`);
+            console.log(`Error with logstake for user ${user}: ${error}`);
         }
 
 
