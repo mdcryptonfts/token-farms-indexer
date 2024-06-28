@@ -31,10 +31,10 @@ const handle_logrewards = async (message, postgresPool) => {
 
                 const updateQuery = `
                     UPDATE tokenfarms_farms 
-                    SET reward_pools = $1, last_update_time = $2, incentive_count = $3, global_sequence = $4
-                    WHERE farm_name = $5
+                    SET reward_pools = $1, last_update_time = $2, incentive_count = $3, global_sequence = $4, total_staked = $5
+                    WHERE farm_name = $6
                 `;
-                const updateValues = [{ rewards: rewards }, f.last_update_time, f.incentive_count, global_sequence, f.farm_name];
+                const updateValues = [{ rewards: rewards }, f.last_update_time, f.incentive_count, global_sequence, f.total_staked, f.farm_name];
                 await postgresClient.query(updateQuery, updateValues);
 
                 console.log(`Updated farm ${f.farm_name}`);
