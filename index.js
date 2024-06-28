@@ -56,7 +56,7 @@ const runApp = async () => {
 	await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}`, async (message) => {
 		const action_name = JSON.parse(message).name;
 		const data = JSON.parse(message).data;
-		const block_num = JSON.parse(message).blocknum;
+		const block_num = JSON.parse(message).blocknum - 360;
 
 		try{
 			const paused = await isPaused(client);
