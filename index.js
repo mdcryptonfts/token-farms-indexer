@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const config = require('./config.json');
 const redis = require('redis');
-const { isPaused } = require('./helpers.js');
+const { isRollbackInProgress } = require('./helpers.js');
 const { handle_createfarm } = require('./handle_createfarm.js');
 const { handle_logrewards } = require('./handle_logrewards.js');
 const { handle_logstake } = require('./handle_logstake.js');
@@ -34,63 +34,69 @@ const runApp = async () => {
 	})		
 
 	/**
-	 * @rollback
+	 * @rollback_channel
 	 * 
-	 * If there is a fork on the chain, this will notify us
+	 * If there is a fork on the chain, this channel will notify us
 	 * 
-	 * When a rollback happens, we will store `paused` in redis cache, and 
-	 * start caching any new messages that come in. Any postgres deltas where
-	 * block_number is >= the fork block will be reversed. Once reversed,
-	 * unpause and process cache. Then continue as normal.
+	 * @handle_rollback
+	 * 
+	 * Reverses any deltas that happened on/after the block we are rolling back to
+	 * 
+	 * Postgres session will be set to rollback mode, blocking any new actions from 
+	 * being committed to the database. After processing the relevant deltas, any
+	 * deltas on/after the rollback block will be deleted from the deltas tables.
+	 * 
 	 */
 
 	await subscriber.subscribe(`ship::wax::rollback`, async (message) => {
-		// set isPaused in redis
-		// handle_rollback
-		// process pending transactions
-		// unpause
-		// make sure atomicity is maintained here, and with actions (NX/EX)
 		console.log(`rollback: ${message}`)
+		const block_num = Math.min(JSON.parse(message).new_block, JSON.parse(message).old_block); 
+		await handle_rollback(message, postgresPool, block_num);
 	})		
 
-	await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}`, async (message) => {
-		const action_name = JSON.parse(message).name;
-		const data = JSON.parse(message).data;
-		const block_num = JSON.parse(message).blocknum - 360;
+    await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}`, async (message) => {
+        const action_name = JSON.parse(message).name;
+        const data = JSON.parse(message).data;
 
-		try{
-			const paused = await isPaused(client);
+        try {
+            const postgresClient = await postgresPool.connect();
 
-			if(!paused){
-				switch(action_name){
-				case "createfarm":
-					console.log(action_name);
-					await handle_createfarm(message, postgresPool);
-					break;
-				case "logrewards":
-					await handle_logrewards(message, postgresPool);
-					break;
-				case "logstake":
-					await handle_logstake(message, postgresPool, action_name);
-					break;
-				case "logunstake":
-					await handle_logstake(message, postgresPool, action_name);
-					break;					
-				default:
-					console.log("default")
-					console.log(action_name)
-					console.log(data)
-					// for testing
-					await handle_rollback(message, postgresPool, block_num);
-				}
-				
-			} else {
-				//await cache_createfarm(message, client);
-			}
-		} catch (e) {
-			console.log(`error processing ${config.farm_name} action: ${e}`);
-		}
-	})	
+            for (let attempt = 1; attempt <= config.max_retries; attempt++) {
+                const rollbackInProgress = await isRollbackInProgress(postgresClient);
+
+                if (!rollbackInProgress) {
+                    switch(action_name) {
+                        case "createfarm":
+                            await handle_createfarm(message, postgresPool);
+                            break;
+                        case "logrewards":
+                            await handle_logrewards(message, postgresPool);
+                            break;
+                        case "logstake":
+                            await handle_logstake(message, postgresPool, action_name);
+                            break;
+                        case "logunstake":
+                            await handle_logstake(message, postgresPool, action_name);
+                            break;
+                        default:
+                            console.log("default")
+                            console.log(action_name)
+                            console.log(data)
+                    }
+                    break;
+                } else {
+                    console.log(`Rollback in progress. Retrying in ${config.retry_delay_ms / 1000} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, config.retry_delay_ms));
+                }
+
+                if (attempt === config.max_retries) {
+                    console.log(`Failed to process ${action_name} after ${config.max_retries} attempts`);
+                }
+            }
+        } catch (e) {
+            console.log(`error processing ${config.farm_name} action: ${e}`);
+        }
+    })	
 			      
     process.on('SIGINT', () => {
         client.quit();

@@ -8,6 +8,7 @@ const handle_logrewards = async (message, postgresPool) => {
         try {
             const block_num = JSON.parse(message).blocknum;
             const block_timestamp = JSON.parse(message).blocktimestamp;
+            const global_sequence = JSON.parse(message)?.receipt?.global_sequence;
             const first_receiver = JSON.parse(message)?.receiver;
             if (first_receiver != config.farm_contract) return;
 
@@ -30,10 +31,10 @@ const handle_logrewards = async (message, postgresPool) => {
 
                 const updateQuery = `
                     UPDATE tokenfarms_farms 
-                    SET reward_pools = $1, last_update_time = $2, incentive_count = $3
-                    WHERE farm_name = $4
+                    SET reward_pools = $1, last_update_time = $2, incentive_count = $3, global_sequence = $4
+                    WHERE farm_name = $5
                 `;
-                const updateValues = [{ rewards: rewards }, f.last_update_time, f.incentive_count, f.farm_name];
+                const updateValues = [{ rewards: rewards }, f.last_update_time, f.incentive_count, global_sequence, f.farm_name];
                 await postgresClient.query(updateQuery, updateValues);
 
                 console.log(`Updated farm ${f.farm_name}`);

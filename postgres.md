@@ -24,6 +24,7 @@
     total_staked BIGINT NOT NULL,
     vesting_time BIGINT NOT NULL,
     last_update_time BIGINT NOT NULL,
+    global_sequence BIGINT NOT NULL,
     reward_pools JSON
 );
 
@@ -41,6 +42,7 @@
     farm_name VARCHAR(12) NOT NULL,
     balance JSON,
     last_update_time BIGINT NOT NULL,
+    global_sequence BIGINT NOT NULL,
     CONSTRAINT user_farm_unique UNIQUE (username, farm_name)
 );
 
@@ -79,3 +81,57 @@ CREATE TABLE tokenfarms_staker_deltas (
 > GRANT USAGE, SELECT ON SEQUENCE tokenfarms_staker_deltas_delta_id_seq TO waxdao;
 > CREATE INDEX staker_block_idx ON tokenfarms_staker_deltas (block_number);
 
+
+## Create function to set session variable for rollback in progress
+
+```
+CREATE OR REPLACE FUNCTION set_rollback_in_progress()
+RETURNS void AS $$
+BEGIN
+    PERFORM set_config('tokenfarms.rollback_is_in_progress', 'true', false);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION unset_rollback_in_progress()
+RETURNS void AS $$
+BEGIN
+    PERFORM set_config('tokenfarms.rollback_is_in_progress', 'false', false);
+END;
+$$ LANGUAGE plpgsql;
+```
+
+## Create function to check new global sequence is > old, unless rollback is in progress
+
+```
+CREATE OR REPLACE FUNCTION check_global_sequence()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF current_setting('tokenfarms.rollback_is_in_progress', true) IS NOT NULL 
+        AND current_setting('tokenfarms.rollback_is_in_progress', true) = 'true' THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.global_sequence < OLD.global_sequence THEN
+        RAISE EXCEPTION 'New global sequence (%) is less than existing global sequence (%)', NEW.global_sequence, OLD.global_sequence;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+## Create trigger on farms table and stakers table to call check_global_sequence on updates
+
+```
+CREATE TRIGGER trigger_check_farms_global_sequence
+BEFORE UPDATE ON tokenfarms_farms
+FOR EACH ROW
+EXECUTE FUNCTION check_global_sequence();
+```
+
+```
+CREATE TRIGGER trigger_check_stakers_global_sequence
+BEFORE UPDATE ON tokenfarms_stakers
+FOR EACH ROW
+EXECUTE FUNCTION check_global_sequence();
+```

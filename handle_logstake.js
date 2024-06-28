@@ -8,7 +8,8 @@ const handle_logstake = async (message, postgresPool, action_name) => {
         const block_num = JSON.parse(message).blocknum;
         const block_timestamp = JSON.parse(message).blocktimestamp;
         const date = new Date(block_timestamp);
-        const epoch_timestamp = Math.floor(date.getTime() / 1000);          
+        const epoch_timestamp = Math.floor(date.getTime() / 1000);   
+        const global_sequence = JSON.parse(message)?.receipt?.global_sequence;       
         const first_receiver = JSON.parse(message)?.receiver;
         if (first_receiver != config.farm_contract) return;
 
@@ -36,11 +37,11 @@ const handle_logstake = async (message, postgresPool, action_name) => {
 
                 const updateQuery = `
 		        UPDATE tokenfarms_stakers 
-		        SET balance = $1, last_update_time = $2
-		        WHERE farm_name = $3
-                AND username = $4
+		        SET balance = $1, last_update_time = $2, global_sequence = $3
+		        WHERE farm_name = $4
+                AND username = $5
 		      `;
-                const updateValues = [updated_balance, epoch_timestamp, farm_name, user];
+                const updateValues = [updated_balance, epoch_timestamp, global_sequence, farm_name, user];
                 const updateResult = await postgresClient.query(updateQuery, updateValues);
 
                 console.log(`updated user ${user} for ${action_name} action`);
@@ -66,15 +67,16 @@ const handle_logstake = async (message, postgresPool, action_name) => {
                 }
 
                 const insertStakerQuery = `
-                  INSERT INTO tokenfarms_stakers (username, farm_name, balance, last_update_time)
-                  VALUES ($1, $2, $3, $4)
+                  INSERT INTO tokenfarms_stakers (username, farm_name, balance, last_update_time, global_sequence)
+                  VALUES ($1, $2, $3, $4, $5)
                 `;
 
                 const stakerValues = [
                     user,
                     farm_name,
                     updated_balance,
-                    epoch_timestamp
+                    epoch_timestamp,
+                    global_sequence
                 ];   
 
                 await postgresClient.query(insertStakerQuery, stakerValues);  
@@ -96,8 +98,6 @@ const handle_logstake = async (message, postgresPool, action_name) => {
         } catch (error) {
             console.log(`Error with logstake for user ${user}: ${error}`);
         }
-
-
 
     } catch (e) {
         console.log(`error handling logstake: ${e}`);
