@@ -59,10 +59,9 @@ const runApp = async () => {
         const data = JSON.parse(message).data;
 
         try {
-            const postgresClient = await postgresPool.connect();
 
             for (let attempt = 1; attempt <= config.max_retries; attempt++) {
-                const rollbackInProgress = await isRollbackInProgress(postgresClient);
+                const rollbackInProgress = await isRollbackInProgress(postgresPool);
 
                 if (!rollbackInProgress) {
                     switch(action_name) {
