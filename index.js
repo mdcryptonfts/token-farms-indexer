@@ -57,6 +57,7 @@ const runApp = async () => {
     await subscriber.subscribe(`ship::wax::actions/contract/${config.farm_contract}`, async (message) => {
         const action_name = JSON.parse(message).name;
         const data = JSON.parse(message).data;
+        console.log(`received ${action_name} message`);
 
         try {
 
