@@ -1,5 +1,3 @@
-const config = require('./config.json');
-
 const handle_heartbeat = async (message, postgresPool) => {
     let postgresClient = null;
 
