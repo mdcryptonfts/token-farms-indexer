@@ -6,6 +6,7 @@ const { handle_createfarm } = require('./handle_createfarm.js');
 const { handle_logrewards } = require('./handle_logrewards.js');
 const { handle_logstake } = require('./handle_logstake.js');
 const { handle_rollback } = require('./handle_rollback.js');
+const { handle_heartbeat } = require('./handle_heartbeat.js');
 
 const postgresPool = new Pool({
     user: config.postgres.user,

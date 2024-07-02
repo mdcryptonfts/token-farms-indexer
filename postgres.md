@@ -3,18 +3,29 @@
 
 ## Database initialization
 
-> CREATE DATABASE wax;
+```
+CREATE DATABASE wax;
+GRANT CONNECT, TEMPORARY ON DATABASE wax TO waxdao;
+GRANT ALL PRIVILEGES ON DATABASE wax TO waxdao;
+\c wax
+```
 
-> GRANT CONNECT, TEMPORARY ON DATABASE wax TO waxdao;
+## Table creation for health
 
-> GRANT ALL PRIVILEGES ON DATABASE wax TO waxdao;
+```
+CREATE TABLE tokenfarms_health (
+    id SMALLINT PRIMARY KEY NOT NULL,
+    last_updated_block BIGINT NOT NULL,
+    head_block BIGINT NOT NULL
+);
 
+GRANT ALL PRIVILEGES ON TABLE tokenfarms_health TO waxdao;
+```
 
 ## Table creation for token farms
 
-> \c wax
-
-> CREATE TABLE tokenfarms_farms (
+```
+CREATE TABLE tokenfarms_farms (
     farm_name VARCHAR(12) PRIMARY KEY NOT NULL,
     creator VARCHAR(12) NOT NULL,
     original_creator VARCHAR(12) NOT NULL,
@@ -28,33 +39,59 @@
     reward_pools JSON
 );
 
-> GRANT ALL PRIVILEGES ON TABLE tokenfarms_farms TO waxdao;
-> CREATE INDEX creator_idx ON tokenfarms_farms (creator);
-> CREATE INDEX original_creator_idx ON tokenfarms_farms (original_creator);
-> CREATE INDEX time_created_idx ON tokenfarms_farms (time_created);
-
+GRANT ALL PRIVILEGES ON TABLE tokenfarms_farms TO waxdao;
+CREATE INDEX creator_idx ON tokenfarms_farms (creator);
+CREATE INDEX original_creator_idx ON tokenfarms_farms (original_creator);
+CREATE INDEX time_created_idx ON tokenfarms_farms (time_created);
+```
 
 ## Table creation for stakers
 
-> CREATE TABLE tokenfarms_stakers (
+```
+CREATE TABLE tokenfarms_stakers (
     id SERIAL PRIMARY KEY NOT NULL,
     username VARCHAR(12) NOT NULL,
     farm_name VARCHAR(12) NOT NULL,
     balance JSON,
+    balance_numeric BIGINT,
     last_update_time BIGINT NOT NULL,
     global_sequence BIGINT NOT NULL,
     CONSTRAINT user_farm_unique UNIQUE (username, farm_name)
 );
 
-> GRANT ALL PRIVILEGES ON TABLE tokenfarms_stakers TO waxdao;
-> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_stakers_id_seq TO waxdao;
-> CREATE INDEX user_idx ON tokenfarms_stakers (username);
-> CREATE INDEX farm_idx ON tokenfarms_stakers (farm_name);
-> CREATE INDEX user_farm_idx ON tokenfarms_stakers (username, farm_name);
+GRANT ALL PRIVILEGES ON TABLE tokenfarms_stakers TO waxdao;
+GRANT USAGE, SELECT ON SEQUENCE tokenfarms_stakers_id_seq TO waxdao;
+CREATE INDEX user_idx ON tokenfarms_stakers (username);
+CREATE INDEX farm_idx ON tokenfarms_stakers (farm_name);
+CREATE INDEX balance_idx ON tokenfarms_stakers (balance_numeric);
+CREATE INDEX user_farm_idx ON tokenfarms_stakers (username, farm_name);
+```
+
+## Trigger function to store the numeric balance for stakers during updates/inserts
+
+```
+CREATE OR REPLACE FUNCTION update_balance_numeric()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.balance_numeric := CAST(
+        regexp_replace(NEW.balance->>'quantity', '[^0-9]', '', 'g')
+        AS BIGINT
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+```
+CREATE TRIGGER update_balance_numeric_trigger
+BEFORE INSERT OR UPDATE ON tokenfarms_stakers
+FOR EACH ROW EXECUTE FUNCTION update_balance_numeric();
+```
 
 
 ## Table creation for farm deltas
 
+```
 CREATE TYPE delta_type_enum AS ENUM ('INSERT', 'UPDATE', 'DELETE');
 
 CREATE TABLE tokenfarms_farm_deltas (
@@ -64,12 +101,15 @@ CREATE TABLE tokenfarms_farm_deltas (
     old_data JSON,
     block_number BIGINT NOT NULL
 );
-> GRANT ALL PRIVILEGES ON TABLE tokenfarms_farm_deltas TO waxdao;
-> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_farm_deltas_delta_id_seq TO waxdao;
-> CREATE INDEX block_idx ON tokenfarms_farm_deltas (block_number);
+
+GRANT ALL PRIVILEGES ON TABLE tokenfarms_farm_deltas TO waxdao;
+GRANT USAGE, SELECT ON SEQUENCE tokenfarms_farm_deltas_delta_id_seq TO waxdao;
+CREATE INDEX block_idx ON tokenfarms_farm_deltas (block_number);
+```
 
 ## Table creation for staker deltas
 
+```
 CREATE TABLE tokenfarms_staker_deltas (
     delta_id BIGSERIAL PRIMARY KEY,
     user_farm VARCHAR(25) NOT NULL,
@@ -77,10 +117,11 @@ CREATE TABLE tokenfarms_staker_deltas (
     old_data JSON,
     block_number BIGINT NOT NULL
 );
-> GRANT ALL PRIVILEGES ON TABLE tokenfarms_staker_deltas TO waxdao;
-> GRANT USAGE, SELECT ON SEQUENCE tokenfarms_staker_deltas_delta_id_seq TO waxdao;
-> CREATE INDEX staker_block_idx ON tokenfarms_staker_deltas (block_number);
 
+GRANT ALL PRIVILEGES ON TABLE tokenfarms_staker_deltas TO waxdao;
+GRANT USAGE, SELECT ON SEQUENCE tokenfarms_staker_deltas_delta_id_seq TO waxdao;
+CREATE INDEX staker_block_idx ON tokenfarms_staker_deltas (block_number);
+```
 
 ## Create function to set session variable for rollback in progress
 
