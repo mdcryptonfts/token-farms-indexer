@@ -2,6 +2,7 @@
 environment.js
 config.json
 config.yml
+get_block.sh
 
 # Dependencies
 /node_modules
