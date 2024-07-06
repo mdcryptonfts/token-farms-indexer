@@ -3,6 +3,11 @@ environment.js
 config.json
 config.yml
 get_block.sh
+thalos-env.conf
+*.pid
+*.log
+*.md
+!README.md
 
 # Dependencies
 /node_modules

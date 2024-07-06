@@ -1,5 +1,12 @@
 # Postgres configuration
 
+Note: You can view details about these tables and their purposes in [our documentation](https://waxdao.gitbook.io/waxdao/products/token-farms/developers/indexer/postgres-thalos)
+
+---
+
+You can run the following commands to set up your postgres database.
+
+In the future I will attempt to set this up as a script, but I had trouble getting the permissions to work properly so for now it's a manual process.
 
 ## Database initialization
 
@@ -7,6 +14,10 @@
 CREATE DATABASE wax;
 GRANT CONNECT, TEMPORARY ON DATABASE wax TO waxdao;
 GRANT ALL PRIVILEGES ON DATABASE wax TO waxdao;
+```
+
+## Connect to the new database
+```
 \c wax
 ```
 
@@ -20,6 +31,12 @@ CREATE TABLE tokenfarms_health (
 );
 
 GRANT ALL PRIVILEGES ON TABLE tokenfarms_health TO waxdao;
+```
+
+## Create initial row for health table
+
+```
+INSERT INTO tokenfarms_health (id, last_updated_block, head_block) VALUES (0, 315538658, 315538658);
 ```
 
 ## Table creation for token farms

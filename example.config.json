@@ -1,5 +1,4 @@
 {
-  "start_block": 315538659,
   "farm_contract": "tf.waxdao",
   "max_retries": 5,
   "retry_delay_ms": 1000,
